@@ -76,7 +76,8 @@ func (c *Controller) Start(ctx context.Context, id string) (cin sandbox.Controll
 		labels = map[string]string{}
 	)
 
-	sandboxImage := c.getSandboxImageName()
+	sandboxImage := c.getSandboxImageName(ctx, config)
+
 	// Ensure sandbox container image snapshot.
 	image, err := c.ensureImageExists(ctx, sandboxImage, config, metadata.RuntimeHandler)
 	if err != nil {
@@ -133,7 +134,7 @@ func (c *Controller) Start(ctx context.Context, id string) (cin sandbox.Controll
 	// NOTE: sandboxContainerSpec SHOULD NOT have side
 	// effect, e.g. accessing/creating files, so that we can test
 	// it safely.
-	spec, err := c.sandboxContainerSpec(id, config, &image.ImageSpec.Config, metadata.NetNSPath, ociRuntime.PodAnnotations)
+	spec, err := c.sandboxContainerSpec(ctx, id, config, &image.ImageSpec.Config, metadata.NetNSPath, ociRuntime.PodAnnotations)
 	if err != nil {
 		return cin, fmt.Errorf("failed to generate sandbox container spec: %w", err)
 	}
@@ -335,9 +336,19 @@ func (c *Controller) ensureImageExists(ctx context.Context, ref string, config *
 	return &newImage, nil
 }
 
-func (c *Controller) getSandboxImageName() string {
+func (c *Controller) getSandboxImageName(ctx context.Context, config *runtime.PodSandboxConfig) string {
 	// returns the name of the sandbox image used to scope pod shared resources used by the pod's containers,
 	// if empty return the default sandbox image.
+
+	// Check for pod annotation override first
+	if config != nil && config.Annotations != nil {
+		if customImage, exists := config.Annotations["io.containerd.image.sandbox"]; exists {
+			log.G(ctx).WithField("sandbox_image", customImage).Debugf("Using pod annotation sandbox image override")
+			return customImage
+		}
+	}
+
+	// Fall back to default sandbox image logic
 	if c.imageService != nil {
 		sandboxImage := c.imageService.PinnedImage("sandbox")
 		if sandboxImage != "" {

@@ -438,7 +438,7 @@ func TestLinuxSandboxContainerSpec(t *testing.T) {
 			if test.configChange != nil {
 				test.configChange(config)
 			}
-			spec, err := c.sandboxContainerSpec(testID, config, imageConfig, nsPath, nil)
+			spec, err := c.sandboxContainerSpec(context.Background(), testID, config, imageConfig, nsPath, nil)
 			if test.expectErr {
 				assert.Error(t, err)
 				assert.Nil(t, spec)
