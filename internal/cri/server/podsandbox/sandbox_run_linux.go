@@ -17,6 +17,7 @@
 package podsandbox
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -37,7 +38,7 @@ import (
 	criutil "github.com/containerd/containerd/v2/internal/cri/util"
 )
 
-func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxConfig,
+func (c *Controller) sandboxContainerSpec(ctx context.Context, id string, config *runtime.PodSandboxConfig,
 	imageConfig *imagespec.ImageConfig, nsPath string, runtimePodAnnotations []string) (_ *runtimespec.Spec, retErr error) {
 	// Creates a spec Generator with the default spec.
 	// TODO(random-liu): [P1] Compare the default settings with docker and containerd default.
@@ -194,7 +195,7 @@ func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 		specOpts = append(specOpts, customopts.WithAnnotation(pKey, pValue))
 	}
 
-	specOpts = append(specOpts, annotations.DefaultCRIAnnotations(id, "", c.getSandboxImageName(), config, true)...)
+	specOpts = append(specOpts, annotations.DefaultCRIAnnotations(id, "", c.getSandboxImageName(ctx, config), config, true)...)
 
 	return c.runtimeSpec(id, "", specOpts...)
 }

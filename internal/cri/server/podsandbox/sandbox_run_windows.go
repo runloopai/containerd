@@ -17,6 +17,7 @@
 package podsandbox
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -31,7 +32,7 @@ import (
 	"github.com/containerd/containerd/v2/internal/cri/util"
 )
 
-func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxConfig,
+func (c *Controller) sandboxContainerSpec(ctx context.Context, id string, config *runtime.PodSandboxConfig,
 	imageConfig *imagespec.ImageConfig, nsPath string, runtimePodAnnotations []string) (*runtimespec.Spec, error) {
 	// Creates a spec Generator with the default spec.
 	specOpts := []oci.SpecOpts{
@@ -84,7 +85,7 @@ func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxC
 	specOpts = append(specOpts, customopts.WithAnnotation(annotations.WindowsHostProcess, strconv.FormatBool(config.GetWindows().GetSecurityContext().GetHostProcess())))
 
 	specOpts = append(specOpts,
-		annotations.DefaultCRIAnnotations(id, "", c.getSandboxImageName(), config, true)...,
+		annotations.DefaultCRIAnnotations(id, "", c.getSandboxImageName(ctx, config), config, true)...,
 	)
 
 	return c.runtimeSpec(id, "", specOpts...)

@@ -19,6 +19,8 @@
 package podsandbox
 
 import (
+	"context"
+
 	"github.com/containerd/containerd/v2/core/snapshots"
 	"github.com/containerd/containerd/v2/internal/cri/annotations"
 	"github.com/containerd/containerd/v2/pkg/oci"
@@ -27,9 +29,9 @@ import (
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-func (c *Controller) sandboxContainerSpec(id string, config *runtime.PodSandboxConfig,
+func (c *Controller) sandboxContainerSpec(ctx context.Context, id string, config *runtime.PodSandboxConfig,
 	imageConfig *imagespec.ImageConfig, nsPath string, runtimePodAnnotations []string) (_ *runtimespec.Spec, retErr error) {
-	return c.runtimeSpec(id, "", annotations.DefaultCRIAnnotations(id, "", c.getSandboxImageName(), config, true)...)
+	return c.runtimeSpec(id, "", annotations.DefaultCRIAnnotations(id, "", c.getSandboxImageName(ctx, config), config, true)...)
 }
 
 // sandboxContainerSpecOpts generates OCI spec options for
